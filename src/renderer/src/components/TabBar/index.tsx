@@ -1,6 +1,6 @@
 import { useAtom, useSetAtom } from 'jotai'
 import { tabsAtom, activeTabIdAtom, closeTabAtom } from '@/store/tabs'
-import { IconX, IconTerminal2, IconEye } from '@tabler/icons-react'
+import { IconX, IconTerminal2, IconEye, IconServer } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 
 const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
@@ -26,22 +26,34 @@ export default function TabBar() {
           <div
             key={tab.id}
             className={cn(
-              'group flex h-full items-center gap-2 px-4 cursor-pointer rounded-lg transition-colors',
+              'group flex h-full items-center gap-2 px-4 cursor-pointer rounded-lg transition-all',
               activeTabId === tab.id
                 ? 'bg-[#2d3f54] text-white'
-                : 'bg-transparent text-neutral-400 hover:bg-[#2d3f54]/50 hover:text-white'
+                : 'bg-transparent text-neutral-400 hover:bg-[#2d3f54]/50 hover:text-white',
             )}
             onClick={() => setActiveTabId(tab.id)}
           >
             {tab.type === 'vaults' ? (
               <IconEye className="h-4 w-4 shrink-0" />
+            ) : tab.type === 'ssh' ? (
+              <IconServer className="h-4 w-4 shrink-0" />
             ) : (
               <IconTerminal2 className="h-4 w-4 shrink-0" />
             )}
-            <span className="text-sm whitespace-nowrap">{tab.label}</span>
+            <span
+              className={cn(
+                'text-sm whitespace-nowrap overflow-hidden text-ellipsis transition-all',
+                activeTabId === tab.id && tab.type !== 'vaults' ? 'max-w-40 mr-10' : 'max-w-24'
+              )}
+            >
+              {tab.label}
+            </span>
             {tab.type !== 'vaults' && (
               <button
-                className="ml-1 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 transition-opacity"
+                className={cn(
+                    "ml-1 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 transition-opacity",
+                    activeTabId === tab.id && 'opacity-100'
+                )}
                 onClick={(e) => {
                   e.stopPropagation()
                   closeTab(tab.id)

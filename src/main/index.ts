@@ -2,6 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { ptyManager } from './ptyManager'
+import { IPC_CHANNELS, PtyCreateOptions, PtyResizeOptions } from '../shared/types'
 
 function createWindow(): void {
   // Create the browser window.
@@ -55,6 +57,25 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+  // PTY IPC handlers
+  ipcMain.handle(IPC_CHANNELS.PTY_CREATE, (event, options: PtyCreateOptions) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) return false
+    return ptyManager.create(options, window)
+  })
+
+  ipcMain.on(IPC_CHANNELS.PTY_DATA, (_, { id, data }: { id: string; data: string }) => {
+    ptyManager.write(id, data)
+  })
+
+  ipcMain.on(IPC_CHANNELS.PTY_RESIZE, (_, options: PtyResizeOptions) => {
+    ptyManager.resize(options)
+  })
+
+  ipcMain.on(IPC_CHANNELS.PTY_DESTROY, (_, id: string) => {
+    ptyManager.destroy(id)
+  })
+
   createWindow()
 
   app.on('activate', function () {
@@ -68,6 +89,7 @@ app.whenReady().then(() => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
+  ptyManager.destroyAll()
   if (process.platform !== 'darwin') {
     app.quit()
   }

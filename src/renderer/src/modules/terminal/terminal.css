@@ -1,0 +1,22 @@
+/* Custom scrollbar for xterm terminal */
+
+/* xterm canvas scrollbar */
+.xterm .xterm-scrollable-element > .scrollbar {
+  width: 8px !important;
+  right: 2px !important;
+}
+
+.xterm .xterm-scrollable-element > .scrollbar > .slider {
+  width: 6px !important;
+  border-radius: 3px !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  left: 1px !important;
+}
+
+.xterm .xterm-scrollable-element > .scrollbar > .slider:hover {
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+.xterm .xterm-scrollable-element > .scrollbar > .slider:active {
+  background: rgba(255, 255, 255, 0.5) !important;
+}
