@@ -2,7 +2,7 @@
 import { cn } from '@/lib/utils'
 import React, { useState, createContext, useContext } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { IconMenu2, IconX } from '@tabler/icons-react'
+import { IconMenu2, IconX, IconPinned, IconPinnedOff } from '@tabler/icons-react'
 
 interface Links {
   label: string
@@ -14,6 +14,8 @@ interface SidebarContextProps {
   open: boolean
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
   animate: boolean
+  pinned: boolean
+  setPinned: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const SidebarContext = createContext<SidebarContextProps | undefined>(undefined)
@@ -38,12 +40,13 @@ export const SidebarProvider = ({
   animate?: boolean
 }) => {
   const [openState, setOpenState] = useState(false)
+  const [pinned, setPinned] = useState(false)
 
   const open = openProp !== undefined ? openProp : openState
   const setOpen = setOpenProp !== undefined ? setOpenProp : setOpenState
 
   return (
-    <SidebarContext.Provider value={{ open, setOpen, animate: animate }}>
+    <SidebarContext.Provider value={{ open, setOpen, animate, pinned, setPinned }}>
       {children}
     </SidebarContext.Provider>
   )
@@ -81,20 +84,20 @@ export const DesktopSidebar = ({
   children,
   ...props
 }: React.ComponentProps<typeof motion.div>) => {
-  const { open, setOpen, animate } = useSidebar()
+  const { open, setOpen, animate, pinned } = useSidebar()
   return (
     <>
       <motion.div
         className={cn(
-          'h-full pl-4 pr-2 py-4 hidden  md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 w-75 shrink-0',
+          'h-full px-2 pt-4 hidden md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 w-75 shrink-0',
           className
         )}
         initial={false}
         animate={{
-          width: animate ? (open ? '200px' : '60px') : '200px'
+          width: animate ? (open || pinned ? '200px' : '53px') : '200px'
         }}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
+        onMouseEnter={() => !pinned && setOpen(true)}
+        onMouseLeave={() => !pinned && setOpen(false)}
         {...props}
       >
         {children}
@@ -159,11 +162,11 @@ export const SidebarLink = ({
   className?: string
   onClick?: () => void
 }) => {
-  const { open, animate } = useSidebar()
+  const { open, animate, pinned } = useSidebar()
   return (
     <a
       href={link.href}
-      className={cn('flex items-center justify-start gap-2  group/sidebar py-2 px-2', className)}
+      className={cn('flex items-center justify-start group/sidebar gap-2 py-2 px-2', className)}
       onClick={(e) => {
         e.preventDefault()
         onClick?.()
@@ -173,14 +176,35 @@ export const SidebarLink = ({
       {link.icon}
 
       <motion.span
+        style={{
+          display: animate ? (open || pinned ? 'inline-block' : 'none') : 'inline-block'
+        }}
         animate={{
-          display: animate ? (open ? 'inline-block' : 'none') : 'inline-block',
-          opacity: animate ? (open ? 1 : 0) : 1
+          opacity: animate ? (open || pinned ? 1 : 0) : 1
         }}
         className="text-neutral-700 dark:text-neutral-200 text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block p-0! m-0!"
       >
         {link.label}
       </motion.span>
     </a>
+  )
+}
+
+export const SidebarPinButton = ({ className }: { className?: string }) => {
+  const { pinned, setPinned } = useSidebar()
+  return (
+    <button
+      className={cn(
+        'flex items-center justify-start gap-2 w-fit cursor-pointer py-2 px-2 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors',
+        className
+      )}
+      onClick={() => setPinned(!pinned)}
+    >
+      {pinned ? (
+        <IconPinned className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      ) : (
+        <IconPinnedOff className="h-5 w-5 shrink-0 text-neutral-700 dark:text-neutral-200" />
+      )}
+    </button>
   )
 }

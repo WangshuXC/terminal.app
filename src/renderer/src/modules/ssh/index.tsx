@@ -3,8 +3,8 @@ import { AnimatePresence, motion } from 'motion/react'
 import { hostsAtom } from '@/store/hosts'
 import { tabsAtom, closeTabAtom } from '@/store/tabs'
 import { useSSHConnection } from '@/hooks/useSSHConnection'
-import { SSHConnecting } from '@/components/ssh/SSHConnecting'
-import { SSHTerminal } from '@/components/ssh/SSHTerminal'
+import { SSHConnecting } from './components/SSHConnecting'
+import { SSHTerminal } from './components/SSHTerminal'
 
 interface SshModuleProps {
   tabId: string

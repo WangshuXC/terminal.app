@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/Sidebar'
+import { Sidebar, SidebarBody, SidebarLink, SidebarPinButton } from '@/components/ui/Sidebar'
 import { IconServer, IconFileText, IconSettings } from '@tabler/icons-react'
 import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
@@ -21,7 +21,7 @@ const Logo = () => {
         animate={{ opacity: 1 }}
         className="font-bold whitespace-pre text-sky-300 dark:text-white"
       >
-        Terminal
+        Terminix
       </motion.span>
     </a>
   )
@@ -100,6 +100,7 @@ export default function EntryModule() {
               ))}
             </div>
           </div>
+          <SidebarPinButton className="mb-2" />
         </SidebarBody>
       </Sidebar>
       <main className="flex flex-1 rounded-tl-2xl bg-white dark:bg-neutral-900">

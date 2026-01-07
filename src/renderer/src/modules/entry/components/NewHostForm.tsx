@@ -16,6 +16,8 @@ export interface NewHostFormData {
 interface NewHostFormProps {
   onSubmit: (data: NewHostFormData) => void
   isLoading?: boolean
+  initialData?: NewHostFormData
+  submitLabel?: string
 }
 
 // 卡片容器组件
@@ -48,16 +50,23 @@ const IconInput: React.FC<{
   </div>
 )
 
-export const NewHostForm: React.FC<NewHostFormProps> = ({ onSubmit, isLoading = false }) => {
-  const [formData, setFormData] = useState<NewHostFormData>({
-    name: '',
-    address: '',
-    port: 22,
-    authType: 'password',
-    username: '',
-    password: '',
-    privateKey: ''
-  })
+export const NewHostForm: React.FC<NewHostFormProps> = ({
+  onSubmit,
+  isLoading = false,
+  initialData,
+  submitLabel
+}) => {
+  const [formData, setFormData] = useState<NewHostFormData>(
+    initialData || {
+      name: '',
+      address: '',
+      port: 22,
+      authType: 'password',
+      username: '',
+      password: '',
+      privateKey: ''
+    }
+  )
 
   const isFormValid = useMemo(() => {
     const { address, username, authType, password, privateKey } = formData
@@ -210,7 +219,7 @@ export const NewHostForm: React.FC<NewHostFormProps> = ({ onSubmit, isLoading = 
               : 'cursor-not-allowed bg-neutral-200 text-neutral-400 dark:bg-neutral-700 dark:text-neutral-500'
           )}
         >
-          {isLoading ? 'Connecting...' : 'Connect'}
+          {isLoading ? 'Connecting...' : submitLabel || 'Connect'}
         </button>
       </div>
     </form>

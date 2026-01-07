@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { HostData } from '@/store/hosts'
-import { SshConnectionLog, SshConnectionStatus } from '../../../../shared/types'
+import { SshConnectionLog, SshConnectionStatus } from '../../../../../shared/types'
 import {
   IconServer,
   IconTerminal2,

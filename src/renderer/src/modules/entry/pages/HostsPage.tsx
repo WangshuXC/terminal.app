@@ -1,19 +1,30 @@
 import { useState } from 'react'
 import { useAtom, useSetAtom } from 'jotai'
 import { addSshTabAtom, addTerminalTabAtom } from '@/store/tabs'
-import { hostsAtom, addHostAtom, removeHostAtom, HostData } from '@/store/hosts'
+import { hostsAtom, addHostAtom, removeHostAtom, updateHostAtom, HostData } from '@/store/hosts'
 import { SlidePanel } from '@/components/ui/SlidePanel'
-import { NewHostForm, NewHostFormData } from '@/components/forms/NewHostForm'
-import { IconPlus, IconServer, IconTrash, IconTerminal2 } from '@tabler/icons-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter
+} from '@renderer/components/ui/AlertDialog'
+import { NewHostForm, NewHostFormData } from '../components/NewHostForm'
+import { HostCard } from '../components/HostCard'
+import { IconPlus, IconServer, IconTerminal2, IconX } from '@tabler/icons-react'
 
 export default function HostsPage() {
   const [hosts] = useAtom(hostsAtom)
   const addHost = useSetAtom(addHostAtom)
   const removeHost = useSetAtom(removeHostAtom)
+  const updateHost = useSetAtom(updateHostAtom)
   const addSshTab = useSetAtom(addSshTabAtom)
   const addTerminalTab = useSetAtom(addTerminalTabAtom)
 
   const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const [editingHost, setEditingHost] = useState<HostData | null>(null)
+  const [deletingHost, setDeletingHost] = useState<HostData | null>(null)
 
   const handleAddHost = (formData: NewHostFormData) => {
     const newHost = addHost(formData)
@@ -22,13 +33,32 @@ export default function HostsPage() {
     addSshTab({ hostId: newHost.id, label: `${formData.name}` })
   }
 
+  const handleEditHost = (e: React.MouseEvent, host: HostData) => {
+    e.stopPropagation()
+    setEditingHost(host)
+  }
+
+  const handleUpdateHost = (formData: NewHostFormData) => {
+    if (editingHost) {
+      updateHost({ id: editingHost.id, data: formData })
+      setEditingHost(null)
+    }
+  }
+
   const handleConnectHost = (host: HostData) => {
     addSshTab({ hostId: host.id, label: host.name })
   }
 
-  const handleDeleteHost = (e: React.MouseEvent, hostId: string) => {
+  const handleDeleteHost = (e: React.MouseEvent, host: HostData) => {
     e.stopPropagation()
-    removeHost(hostId)
+    setDeletingHost(host)
+  }
+
+  const confirmDeleteHost = () => {
+    if (deletingHost) {
+      removeHost(deletingHost.id)
+      setDeletingHost(null)
+    }
   }
 
   return (
@@ -68,7 +98,8 @@ export default function HostsPage() {
               key={host.id}
               host={host}
               onConnect={() => handleConnectHost(host)}
-              onDelete={(e) => handleDeleteHost(e, host.id)}
+              onDelete={(e) => handleDeleteHost(e, host)}
+              onEdit={(e) => handleEditHost(e, host)}
             />
           ))}
         </div>
@@ -83,44 +114,59 @@ export default function HostsPage() {
       >
         <NewHostForm onSubmit={handleAddHost} />
       </SlidePanel>
-    </div>
-  )
-}
 
-interface HostCardProps {
-  host: HostData
-  onConnect: () => void
-  onDelete: (e: React.MouseEvent) => void
-}
-
-function HostCard({ host, onConnect, onDelete }: HostCardProps) {
-  return (
-    <div
-      onClick={onConnect}
-      className="group relative flex gap-4 cursor-pointer overflow-hidden rounded-xl border border-neutral-200 bg-white p-3 shadow-sm transition-all hover:shadow-lg hover:shadow-neutral-200 dark:border-neutral-700 dark:bg-neutral-800"
-    >
-      {/* Delete Button */}
-      <button
-        onClick={onDelete}
-        className="absolute right-3 top-3 cursor-pointer rounded-lg p-1.5 text-neutral-400 opacity-0 transition-all hover:bg-red-100 hover:text-red-500 group-hover:opacity-100 dark:hover:bg-red-900/30"
+      {/* Edit Host Slide Panel */}
+      <SlidePanel
+        open={!!editingHost}
+        onClose={() => setEditingHost(null)}
+        side="right"
+        width="380px"
       >
-        <IconTrash size={16} />
-      </button>
+        {editingHost && (
+          <NewHostForm onSubmit={handleUpdateHost} initialData={editingHost} submitLabel="Save" />
+        )}
+      </SlidePanel>
 
-      {/* Icon */}
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-blue-600 text-white">
-        <IconServer size={24} />
-      </div>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingHost} onOpenChange={() => setDeletingHost(null)}>
+        <AlertDialogContent className="gap-0 overflow-hidden rounded-2xl border-0 p-0 sm:max-w-md select-none">
+          {/* Header */}
+          <div className="flex items-center justify-between rounded-t-2xl bg-slate-700 px-6 py-4">
+            <h2 className="text-lg font-semibold text-white">Remove a host</h2>
+            <AlertDialogCancel className="h-fit cursor-pointer rounded-lg border-0 bg-transparent p-1.5 text-white shadow-none hover:bg-slate-600 hover:text-white">
+              <IconX className="size-5" />
+            </AlertDialogCancel>
+          </div>
 
-      {/* Host Info */}
-      <div className="flex flex-col">
-        <h3 className="mb-1 truncate text-base font-semibold text-neutral-900 dark:text-white">
-          {host.name}
-        </h3>
-        <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">
-          {host.username}@{host.address}
-        </p>
-      </div>
+          {/* Content */}
+          <div className="bg-white px-6 py-5 dark:bg-neutral-900">
+            <p className="mb-4 text-neutral-600 dark:text-neutral-300">
+              You are going to remove this host:
+            </p>
+            <div className="flex items-center gap-4 rounded-lg bg-neutral-100 p-4 dark:bg-neutral-800">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-blue-600 text-white">
+                <IconServer size={28} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                  {deletingHost?.name}
+                </h3>
+                <p className="text-sm text-neutral-500">ssh, {deletingHost?.username}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <AlertDialogFooter className="rounded-b-2xl bg-white px-6 pb-6 dark:bg-neutral-900">
+            <AlertDialogAction
+              onClick={confirmDeleteHost}
+              className="rounded-lg cursor-pointer bg-[#f87171] px-6 py-2.5 text-white hover:bg-[#ef4444]"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
