@@ -14,7 +14,7 @@ export default function TerminalModule({ tabId }: TerminalModuleProps) {
   const fitAddonRef = useRef<FitAddon | null>(null)
   const isInitializedRef = useRef(false)
 
-  // Handle terminal resize
+  // 处理终端大小调整
   const handleResize = useCallback(() => {
     if (fitAddonRef.current && xtermRef.current) {
       try {
@@ -22,7 +22,7 @@ export default function TerminalModule({ tabId }: TerminalModuleProps) {
         const { cols, rows } = xtermRef.current
         window.terminalApi.resizePty({ id: tabId, cols, rows })
       } catch {
-        // Ignore resize errors during initialization
+        // 忽略初始化期间的调整大小错误
       }
     }
   }, [tabId])
@@ -32,7 +32,7 @@ export default function TerminalModule({ tabId }: TerminalModuleProps) {
 
     isInitializedRef.current = true
 
-    // Create xterm instance
+    // 创建 xterm 实例
     const xterm = new Terminal({
       cursorBlink: true,
       fontSize: 14,
@@ -70,41 +70,41 @@ export default function TerminalModule({ tabId }: TerminalModuleProps) {
     xtermRef.current = xterm
     fitAddonRef.current = fitAddon
 
-    // Open terminal in DOM
+    // 在 DOM 中打开终端
     xterm.open(terminalRef.current)
 
-    // Initial fit
+    // 初始适配
     setTimeout(() => {
       fitAddon.fit()
       const { cols, rows } = xterm
 
-      // Create PTY instance
+      // 创建 PTY 实例
       window.terminalApi.createPty({ id: tabId, cols, rows })
 
-      // Handle user input
+      // 处理用户输入
       xterm.onData((data) => {
         window.terminalApi.writePty(tabId, data)
       })
     }, 0)
 
-    // Listen for PTY output
+    // 监听 PTY 输出
     const unsubscribeOutput = window.terminalApi.onPtyOutput(({ id, data }) => {
       if (id === tabId && xtermRef.current) {
         xtermRef.current.write(data)
       }
     })
 
-    // Listen for PTY exit
+    // 监听 PTY 退出
     const unsubscribeExit = window.terminalApi.onPtyExit(({ id, exitCode }) => {
       if (id === tabId && xtermRef.current) {
-        xtermRef.current.write(`\r\n[Process exited with code ${exitCode}]\r\n`)
+        xtermRef.current.write(`\r\n[进程已退出，退出码 ${exitCode}]\r\n`)
       }
     })
 
-    // Handle window resize
+    // 处理窗口大小调整
     window.addEventListener('resize', handleResize)
 
-    // Cleanup
+    // 清理
     return () => {
       window.removeEventListener('resize', handleResize)
       unsubscribeOutput()
@@ -115,7 +115,7 @@ export default function TerminalModule({ tabId }: TerminalModuleProps) {
     }
   }, [tabId, handleResize])
 
-  // Handle container resize using ResizeObserver
+  // 使用 ResizeObserver 处理容器大小调整
   useEffect(() => {
     if (!terminalRef.current) return
 

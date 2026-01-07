@@ -31,10 +31,19 @@ export const addSshTabAtom = atom(
   null,
   (get, set, hostInfo?: { hostId: string; label: string }) => {
     sshCounter++
+    const tabs = get(tabsAtom)
+    const baseLabel = hostInfo?.label || 'SSH'
+
+    // 统计相同 baseLabel 的 SSH tab 数量
+    const sameLabelCount = tabs.filter(
+      (tab) =>
+        tab.type === 'ssh' && (tab.label === baseLabel || tab.label.startsWith(`${baseLabel} (`))
+    ).length
+
     const newTab: Tab = {
       id: `ssh-${sshCounter}`,
       type: 'ssh',
-      label: hostInfo?.label || `SSH ${sshCounter}`,
+      label: sameLabelCount === 0 ? baseLabel : `${baseLabel} - ${sameLabelCount}`,
       hostId: hostInfo?.hostId
     }
     set(tabsAtom, [...get(tabsAtom), newTab])

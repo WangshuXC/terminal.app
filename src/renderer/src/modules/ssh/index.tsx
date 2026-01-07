@@ -1,4 +1,5 @@
 import { useAtomValue, useSetAtom } from 'jotai'
+import { AnimatePresence, motion } from 'motion/react'
 import { hostsAtom } from '@/store/hosts'
 import { tabsAtom, closeTabAtom } from '@/store/tabs'
 import { useSSHConnection } from '@/hooks/useSSHConnection'
@@ -14,25 +15,18 @@ export default function SshModule({ tabId }: SshModuleProps) {
   const tabs = useAtomValue(tabsAtom)
   const closeTab = useSetAtom(closeTabAtom)
 
-  // Find the tab and associated host
+  // 查找标签页和关联的主机
   const tab = tabs.find((t) => t.id === tabId)
   const host = tab?.hostId ? hosts.find((h) => h.id === tab.hostId) : undefined
 
-  const {
-    status,
-    progress,
-    logs,
-    error,
-    isConnected,
-    reconnect,
-    setTerminalSize
-  } = useSSHConnection(tabId, host)
+  const { status, progress, logs, error, isConnected, reconnect, setTerminalSize } =
+    useSSHConnection(tabId, host)
 
   const handleClose = () => {
     closeTab(tabId)
   }
 
-  // Show error if host not found
+  // 如果主机未找到则显示错误
   if (!host) {
     return (
       <div className="flex h-full w-full flex-1 items-center justify-center bg-neutral-900">
@@ -52,21 +46,33 @@ export default function SshModule({ tabId }: SshModuleProps) {
     )
   }
 
-  // Show connecting page while connecting
-  if (!isConnected) {
-    return (
-      <SSHConnecting
-        host={host}
-        status={status}
-        progress={progress}
-        logs={logs}
-        error={error}
-        onClose={handleClose}
-        onReconnect={reconnect}
-      />
-    )
-  }
+  return (
+    <div className="relative h-full w-full">
+      {/* 终端层 - 连接成功后始终渲染 */}
+      {isConnected && <SSHTerminal tabId={tabId} onResize={setTerminalSize} />}
 
-  // Show terminal when connected
-  return <SSHTerminal tabId={tabId} onResize={setTerminalSize} />
+      {/* 连接中遮罩层，带渐出动画 */}
+      <AnimatePresence>
+        {!isConnected && (
+          <motion.div
+            key="connecting"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="absolute inset-0 z-10"
+          >
+            <SSHConnecting
+              host={host}
+              status={status}
+              progress={progress}
+              logs={logs}
+              error={error}
+              onClose={handleClose}
+              onReconnect={reconnect}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
 }

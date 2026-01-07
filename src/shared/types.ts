@@ -1,4 +1,4 @@
-// IPC Channel names
+// IPC 通道名称
 export const IPC_CHANNELS = {
   PTY_CREATE: 'pty:create',
   PTY_DATA: 'pty:data',
@@ -6,7 +6,7 @@ export const IPC_CHANNELS = {
   PTY_DESTROY: 'pty:destroy',
   PTY_OUTPUT: 'pty:output',
   PTY_EXIT: 'pty:exit',
-  // SSH channels
+  // SSH 通道
   SSH_CONNECT: 'ssh:connect',
   SSH_DISCONNECT: 'ssh:disconnect',
   SSH_WRITE: 'ssh:write',
@@ -18,33 +18,33 @@ export const IPC_CHANNELS = {
   SSH_EXIT: 'ssh:exit'
 } as const
 
-// PTY creation options
+// PTY 创建选项
 export interface PtyCreateOptions {
   id: string
   cols: number
   rows: number
 }
 
-// PTY resize options
+// PTY 调整大小选项
 export interface PtyResizeOptions {
   id: string
   cols: number
   rows: number
 }
 
-// PTY data payload
+// PTY 数据负载
 export interface PtyDataPayload {
   id: string
   data: string
 }
 
-// PTY exit payload
+// PTY 退出负载
 export interface PtyExitPayload {
   id: string
   exitCode: number
 }
 
-// SSH connection status
+// SSH 连接状态
 export type SshConnectionStatus =
   | 'idle'
   | 'connecting'
@@ -54,10 +54,10 @@ export type SshConnectionStatus =
   | 'error'
   | 'disconnected'
 
-// SSH log type
+// SSH 日志类型
 export type SshLogType = 'info' | 'success' | 'error' | 'warning'
 
-// SSH connection log
+// SSH 连接日志
 export interface SshConnectionLog {
   timestamp: number
   type: SshLogType
@@ -65,7 +65,7 @@ export interface SshConnectionLog {
   icon?: string
 }
 
-// SSH connect options
+// SSH 连接选项
 export interface SshConnectOptions {
   id: string
   host: string
@@ -78,39 +78,39 @@ export interface SshConnectOptions {
   rows: number
 }
 
-// SSH resize options
+// SSH 调整大小选项
 export interface SshResizeOptions {
   id: string
   cols: number
   rows: number
 }
 
-// SSH status payload
+// SSH 状态负载
 export interface SshStatusPayload {
   id: string
   status: SshConnectionStatus
   progress: number
 }
 
-// SSH log payload
+// SSH 日志负载
 export interface SshLogPayload {
   id: string
   log: SshConnectionLog
 }
 
-// SSH error payload
+// SSH 错误负载
 export interface SshErrorPayload {
   id: string
   error: string
 }
 
-// SSH output payload
+// SSH 输出负载
 export interface SshOutputPayload {
   id: string
   data: string
 }
 
-// SSH exit payload
+// SSH 退出负载
 export interface SshExitPayload {
   id: string
   code: number

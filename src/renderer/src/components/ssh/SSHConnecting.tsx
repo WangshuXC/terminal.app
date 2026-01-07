@@ -44,7 +44,7 @@ export function SSHConnecting({
         {/* Host Info Card */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
               <IconServer size={28} />
             </div>
             <div>
@@ -87,9 +87,7 @@ export function SSHConnecting({
             <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
               <div
                 className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${
-                  isError
-                    ? 'bg-red-500'
-                    : 'bg-gradient-to-r from-blue-500 to-blue-600'
+                  isError ? 'bg-red-500' : 'bg-linear-to-r from-blue-500 to-blue-600'
                 }`}
                 style={{ width: `${progress}%` }}
               />
@@ -146,7 +144,7 @@ export function SSHConnecting({
           {(isError || isDisconnected) && (
             <button
               onClick={onReconnect}
-              className="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-blue-500/40"
+              className="rounded-lg bg-linear-to-r from-blue-500 to-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-blue-500/40"
             >
               Start over
             </button>
@@ -192,8 +190,8 @@ function LogItem({ log }: LogItemProps) {
   }
 
   return (
-    <div className="flex items-start gap-2">
-      <span className="mt-0.5 shrink-0">{getIcon()}</span>
+    <div className="flex items-center gap-2">
+      <span className="shrink-0">{getIcon()}</span>
       <p className={`font-mono text-sm ${getTextColor()}`}>{log.message}</p>
     </div>
   )

@@ -66,11 +66,11 @@ class SshManager {
     const { id, host, port, username, authType, password, privateKey, cols, rows } = options
 
     return new Promise((resolve) => {
-      if (this.connections.has(id)) {
-        console.warn(`SSH connection ${id} already exists`)
-        resolve(false)
-        return
-      }
+    if (this.connections.has(id)) {
+      console.warn(`SSH 连接 ${id} 已存在`)
+      resolve(false)
+      return
+    }
 
       const client = new Client()
       const connection: SshConnection = {
@@ -130,14 +130,17 @@ class SshManager {
         )
       })
 
-      client.on('keyboard-interactive', (_name, _instructions, _instructionsLang, prompts, finish) => {
-        this.sendLog(window, id, 'info', 'Keyboard-interactive authentication requested', '⌨️')
-        if (prompts.length > 0 && password) {
-          finish([password])
-        } else {
-          finish([])
+      client.on(
+        'keyboard-interactive',
+        (_name, _instructions, _instructionsLang, prompts, finish) => {
+          this.sendLog(window, id, 'info', 'Keyboard-interactive authentication requested', '⌨️')
+          if (prompts.length > 0 && password) {
+            finish([password])
+          } else {
+            finish([])
+          }
         }
-      })
+      )
 
       client.on('error', (err) => {
         connection.status = 'error'
@@ -161,7 +164,7 @@ class SshManager {
         this.sendLog(window, id, 'info', 'Connection ended', '📴')
       })
 
-      // Build auth config
+      // 构建认证配置
       const authConfig: {
         host: string
         port: number
@@ -198,7 +201,7 @@ class SshManager {
   write(id: string, data: string): boolean {
     const connection = this.connections.get(id)
     if (!connection?.shell) {
-      console.warn(`SSH connection ${id} not found or shell not ready`)
+      console.warn(`SSH 连接 ${id} 不存在或 shell 未就绪`)
       return false
     }
 
@@ -210,7 +213,7 @@ class SshManager {
     const { id, cols, rows } = options
     const connection = this.connections.get(id)
     if (!connection?.shell) {
-      console.warn(`SSH connection ${id} not found or shell not ready`)
+      console.warn(`SSH 连接 ${id} 不存在或 shell 未就绪`)
       return false
     }
 

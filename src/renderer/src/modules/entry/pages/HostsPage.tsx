@@ -59,7 +59,7 @@ export default function HostsPage() {
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-neutral-500 dark:text-neutral-400">
           <IconServer size={64} strokeWidth={1} className="opacity-50" />
           <p className="text-lg">No hosts configured</p>
-          <p className="text-sm">Click "New Host" to add your first SSH connection</p>
+          <p className="text-sm">Click &quot;New Host&quot; to add your first SSH connection</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

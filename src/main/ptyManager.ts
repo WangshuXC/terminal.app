@@ -7,7 +7,7 @@ class PtyManager {
   private instances: Map<string, pty.IPty> = new Map()
 
   /**
-   * Get the default shell for the current platform
+   * 获取当前平台的默认 Shell
    */
   private getDefaultShell(): string {
     if (process.platform === 'win32') {
@@ -17,13 +17,13 @@ class PtyManager {
   }
 
   /**
-   * Create a new PTY instance
+   * 创建新的 PTY 实例
    */
   create(options: PtyCreateOptions, window: BrowserWindow): boolean {
     const { id, cols, rows } = options
 
     if (this.instances.has(id)) {
-      console.warn(`PTY instance ${id} already exists`)
+      console.warn(`PTY 实例 ${id} 已存在`)
       return false
     }
 
@@ -39,14 +39,14 @@ class PtyManager {
         env: process.env as { [key: string]: string }
       })
 
-      // Handle PTY output
+      // 处理 PTY 输出
       ptyProcess.onData((data) => {
         if (!window.isDestroyed()) {
           window.webContents.send(IPC_CHANNELS.PTY_OUTPUT, { id, data })
         }
       })
 
-      // Handle PTY exit
+      // 处理 PTY 退出
       ptyProcess.onExit(({ exitCode }) => {
         if (!window.isDestroyed()) {
           window.webContents.send(IPC_CHANNELS.PTY_EXIT, { id, exitCode })
@@ -57,18 +57,18 @@ class PtyManager {
       this.instances.set(id, ptyProcess)
       return true
     } catch (error) {
-      console.error(`Failed to create PTY instance ${id}:`, error)
+      console.error(`创建 PTY 实例 ${id} 失败:`, error)
       return false
     }
   }
 
   /**
-   * Write data to a PTY instance
+   * 向 PTY 实例写入数据
    */
   write(id: string, data: string): boolean {
     const ptyProcess = this.instances.get(id)
     if (!ptyProcess) {
-      console.warn(`PTY instance ${id} not found`)
+      console.warn(`PTY 实例 ${id} 不存在`)
       return false
     }
 
@@ -76,20 +76,20 @@ class PtyManager {
       ptyProcess.write(data)
       return true
     } catch (error) {
-      console.error(`Failed to write to PTY instance ${id}:`, error)
+      console.error(`向 PTY 实例 ${id} 写入数据失败:`, error)
       return false
     }
   }
 
   /**
-   * Resize a PTY instance
+   * 调整 PTY 实例大小
    */
   resize(options: PtyResizeOptions): boolean {
     const { id, cols, rows } = options
     const ptyProcess = this.instances.get(id)
 
     if (!ptyProcess) {
-      console.warn(`PTY instance ${id} not found`)
+      console.warn(`PTY 实例 ${id} 不存在`)
       return false
     }
 
@@ -97,13 +97,13 @@ class PtyManager {
       ptyProcess.resize(cols, rows)
       return true
     } catch (error) {
-      console.error(`Failed to resize PTY instance ${id}:`, error)
+      console.error(`调整 PTY 实例 ${id} 大小失败:`, error)
       return false
     }
   }
 
   /**
-   * Destroy a PTY instance
+   * 销毁 PTY 实例
    */
   destroy(id: string): boolean {
     const ptyProcess = this.instances.get(id)
@@ -116,13 +116,13 @@ class PtyManager {
       this.instances.delete(id)
       return true
     } catch (error) {
-      console.error(`Failed to destroy PTY instance ${id}:`, error)
+      console.error(`销毁 PTY 实例 ${id} 失败:`, error)
       return false
     }
   }
 
   /**
-   * Destroy all PTY instances
+   * 销毁所有 PTY 实例
    */
   destroyAll(): void {
     for (const [id] of this.instances) {

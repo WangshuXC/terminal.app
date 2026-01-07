@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import {
-  SshConnectionStatus,
-  SshConnectionLog,
-  SshConnectOptions
-} from '../../../shared/types'
+import { SshConnectionStatus, SshConnectionLog, SshConnectOptions } from '../../../shared/types'
 import { HostData } from '@/store/hosts'
 
 export interface SSHConnectionState {
@@ -86,24 +82,37 @@ export function useSSHConnection(tabId: string, host: HostData | undefined) {
     terminalSizeRef.current = { cols, rows }
   }, [])
 
-  // Subscribe to SSH events
+  // 订阅 SSH 事件
   useEffect(() => {
-    const unsubStatus = window.sshApi.onStatus((payload) => {
+    let transitionTimer: ReturnType<typeof setTimeout> | null = null
+
+    const unSubStatus = window.sshApi.onStatus((payload) => {
       if (payload.id !== tabId) return
+
+      // 立即更新状态和进度
       setState((prev) => ({
         ...prev,
         status: payload.status,
-        progress: payload.progress,
-        isConnected: payload.status === 'ready'
+        progress: payload.progress
       }))
+
+      // 延迟设置 isConnected 让用户看到进度动画
+      if (payload.status === 'ready' && payload.progress >= 100) {
+        transitionTimer = setTimeout(() => {
+          setState((prev) => ({
+            ...prev,
+            isConnected: true
+          }))
+        }, 800) // 等待 800ms 让动画完成
+      }
     })
 
-    const unsubLog = window.sshApi.onLog((payload) => {
+    const unSubLog = window.sshApi.onLog((payload) => {
       if (payload.id !== tabId) return
       addLog(payload.log)
     })
 
-    const unsubError = window.sshApi.onError((payload) => {
+    const unSubError = window.sshApi.onError((payload) => {
       if (payload.id !== tabId) return
       setState((prev) => ({
         ...prev,
@@ -112,7 +121,7 @@ export function useSSHConnection(tabId: string, host: HostData | undefined) {
       }))
     })
 
-    const unsubExit = window.sshApi.onExit((payload) => {
+    const unSubExit = window.sshApi.onExit((payload) => {
       if (payload.id !== tabId) return
       setState((prev) => ({
         ...prev,
@@ -128,21 +137,29 @@ export function useSSHConnection(tabId: string, host: HostData | undefined) {
     })
 
     return () => {
-      unsubStatus()
-      unsubLog()
-      unsubError()
-      unsubExit()
+      if (transitionTimer) {
+        clearTimeout(transitionTimer)
+      }
+      unSubStatus()
+      unSubLog()
+      unSubError()
+      unSubExit()
     }
   }, [tabId, addLog])
 
-  // Auto-connect on mount
+  // 挂载时自动连接
   useEffect(() => {
     if (host && state.status === 'idle') {
-      connect()
+      // 使用 setTimeout 避免在 effect 中同步调用 setState
+      const timer = setTimeout(() => {
+        connect()
+      }, 0)
+      return () => clearTimeout(timer)
     }
+    return undefined
   }, [host, state.status, connect])
 
-  // Cleanup on unmount
+  // 卸载时清理
   useEffect(() => {
     return () => {
       if (state.isConnected) {

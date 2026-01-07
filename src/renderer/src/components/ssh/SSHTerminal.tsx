@@ -15,7 +15,7 @@ export function SSHTerminal({ tabId, onResize }: SSHTerminalProps) {
   const fitAddonRef = useRef<FitAddon | null>(null)
   const isInitializedRef = useRef(false)
 
-  // Handle terminal resize
+  // 处理终端大小调整
   const handleResize = useCallback(() => {
     if (fitAddonRef.current && xtermRef.current) {
       fitAddonRef.current.fit()
@@ -30,7 +30,7 @@ export function SSHTerminal({ tabId, onResize }: SSHTerminalProps) {
 
     isInitializedRef.current = true
 
-    // Create xterm instance
+    // 创建 xterm 实例
     const xterm = new Terminal({
       cursorBlink: true,
       fontSize: 14,
@@ -68,39 +68,39 @@ export function SSHTerminal({ tabId, onResize }: SSHTerminalProps) {
     xtermRef.current = xterm
     fitAddonRef.current = fitAddon
 
-    // Open terminal in DOM
+    // 在 DOM 中打开终端
     xterm.open(terminalRef.current)
 
-    // Initial fit
+    // 初始适配
     setTimeout(() => {
       fitAddon.fit()
       const { cols, rows } = xterm
       onResize?.(cols, rows)
     }, 0)
 
-    // Handle user input
+    // 处理用户输入
     xterm.onData((data) => {
       window.sshApi.write(tabId, data)
     })
 
-    // Listen for SSH output
+    // 监听 SSH 输出
     const unsubscribeOutput = window.sshApi.onOutput(({ id, data }) => {
       if (id === tabId && xtermRef.current) {
         xtermRef.current.write(data)
       }
     })
 
-    // Listen for SSH exit
+    // 监听 SSH 退出
     const unsubscribeExit = window.sshApi.onExit(({ id, code }) => {
       if (id === tabId && xtermRef.current) {
-        xtermRef.current.write(`\r\n[Session ended with code ${code}]\r\n`)
+        xtermRef.current.write(`\r\n[会话已结束，退出码 ${code}]\r\n`)
       }
     })
 
-    // Handle window resize
+    // 处理窗口大小调整
     window.addEventListener('resize', handleResize)
 
-    // Cleanup
+    // 清理
     return () => {
       window.removeEventListener('resize', handleResize)
       unsubscribeOutput()
@@ -110,7 +110,7 @@ export function SSHTerminal({ tabId, onResize }: SSHTerminalProps) {
     }
   }, [tabId, handleResize, onResize])
 
-  // Handle container resize using ResizeObserver
+  // 使用 ResizeObserver 处理容器大小调整
   useEffect(() => {
     if (!terminalRef.current) return
 

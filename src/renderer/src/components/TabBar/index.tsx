@@ -29,7 +29,7 @@ export default function TabBar() {
               'group flex h-full items-center gap-2 px-4 cursor-pointer rounded-lg transition-all',
               activeTabId === tab.id
                 ? 'bg-[#2d3f54] text-white'
-                : 'bg-transparent text-neutral-400 hover:bg-[#2d3f54]/50 hover:text-white',
+                : 'bg-transparent text-neutral-400 hover:bg-[#2d3f54]/50 hover:text-white'
             )}
             onClick={() => setActiveTabId(tab.id)}
           >
@@ -51,8 +51,8 @@ export default function TabBar() {
             {tab.type !== 'vaults' && (
               <button
                 className={cn(
-                    "ml-1 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 transition-opacity",
-                    activeTabId === tab.id && 'opacity-100'
+                  'ml-1 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 transition-opacity',
+                  activeTabId === tab.id && 'opacity-100'
                 )}
                 onClick={(e) => {
                   e.stopPropagation()

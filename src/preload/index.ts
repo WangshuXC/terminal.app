@@ -13,29 +13,29 @@ import {
   SshExitPayload
 } from '../shared/types'
 
-// Terminal API for renderer
+// 渲染进程终端 API
 const terminalApi = {
-  // Create a new PTY instance
+  // 创建新的 PTY 实例
   createPty: (options: PtyCreateOptions): Promise<boolean> => {
     return ipcRenderer.invoke(IPC_CHANNELS.PTY_CREATE, options)
   },
 
-  // Send data to PTY
+  // 向 PTY 发送数据
   writePty: (id: string, data: string): void => {
     ipcRenderer.send(IPC_CHANNELS.PTY_DATA, { id, data })
   },
 
-  // Resize PTY
+  // 调整 PTY 大小
   resizePty: (options: PtyResizeOptions): void => {
     ipcRenderer.send(IPC_CHANNELS.PTY_RESIZE, options)
   },
 
-  // Destroy PTY
+  // 销毁 PTY
   destroyPty: (id: string): void => {
     ipcRenderer.send(IPC_CHANNELS.PTY_DESTROY, id)
   },
 
-  // Listen for PTY output
+  // 监听 PTY 输出
   onPtyOutput: (callback: (data: { id: string; data: string }) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: { id: string; data: string }) => {
       callback(payload)
@@ -46,7 +46,7 @@ const terminalApi = {
     }
   },
 
-  // Listen for PTY exit
+  // 监听 PTY 退出
   onPtyExit: (callback: (data: { id: string; exitCode: number }) => void): (() => void) => {
     const handler = (
       _event: Electron.IpcRendererEvent,
@@ -61,29 +61,29 @@ const terminalApi = {
   }
 }
 
-// SSH API for renderer
+// 渲染进程 SSH API
 const sshApi = {
-  // Connect to SSH server
+  // 连接 SSH 服务器
   connect: (options: SshConnectOptions): Promise<boolean> => {
     return ipcRenderer.invoke(IPC_CHANNELS.SSH_CONNECT, options)
   },
 
-  // Write data to SSH
+  // 向 SSH 写入数据
   write: (id: string, data: string): void => {
     ipcRenderer.send(IPC_CHANNELS.SSH_WRITE, { id, data })
   },
 
-  // Resize SSH terminal
+  // 调整 SSH 终端大小
   resize: (options: SshResizeOptions): void => {
     ipcRenderer.send(IPC_CHANNELS.SSH_RESIZE, options)
   },
 
-  // Disconnect SSH
+  // 断开 SSH 连接
   disconnect: (id: string): void => {
     ipcRenderer.send(IPC_CHANNELS.SSH_DISCONNECT, id)
   },
 
-  // Listen for SSH status updates
+  // 监听 SSH 状态更新
   onStatus: (callback: (payload: SshStatusPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshStatusPayload) => {
       callback(payload)
@@ -94,7 +94,7 @@ const sshApi = {
     }
   },
 
-  // Listen for SSH logs
+  // 监听 SSH 日志
   onLog: (callback: (payload: SshLogPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshLogPayload) => {
       callback(payload)
@@ -105,7 +105,7 @@ const sshApi = {
     }
   },
 
-  // Listen for SSH errors
+  // 监听 SSH 错误
   onError: (callback: (payload: SshErrorPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshErrorPayload) => {
       callback(payload)
@@ -116,7 +116,7 @@ const sshApi = {
     }
   },
 
-  // Listen for SSH output
+  // 监听 SSH 输出
   onOutput: (callback: (payload: SshOutputPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshOutputPayload) => {
       callback(payload)
@@ -127,7 +127,7 @@ const sshApi = {
     }
   },
 
-  // Listen for SSH exit
+  // 监听 SSH 退出
   onExit: (callback: (payload: SshExitPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshExitPayload) => {
       callback(payload)
@@ -139,9 +139,8 @@ const sshApi = {
   }
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+// 使用 contextBridge API 将 Electron API 暴露给渲染进程
+// 仅在启用上下文隔离时使用，否则直接添加到 DOM 全局对象
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
@@ -151,10 +150,10 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
+  // @ts-ignore (在 dts 中定义)
   window.electron = electronAPI
-  // @ts-ignore (define in dts)
+  // @ts-ignore (在 dts 中定义)
   window.terminalApi = terminalApi
-  // @ts-ignore (define in dts)
+  // @ts-ignore (在 dts 中定义)
   window.sshApi = sshApi
 }

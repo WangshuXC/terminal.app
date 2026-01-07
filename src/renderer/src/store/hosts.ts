@@ -34,20 +34,17 @@ function saveHostsToStorage(hosts: HostData[]): void {
 export const hostsAtom = atom<HostData[]>(loadHostsFromStorage())
 
 // 添加 Host 的 action atom
-export const addHostAtom = atom(
-  null,
-  (get, set, hostData: Omit<HostData, 'id' | 'createdAt'>) => {
-    const newHost: HostData = {
-      ...hostData,
-      id: `host-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      createdAt: Date.now()
-    }
-    const hosts = [...get(hostsAtom), newHost]
-    set(hostsAtom, hosts)
-    saveHostsToStorage(hosts)
-    return newHost
+export const addHostAtom = atom(null, (get, set, hostData: Omit<HostData, 'id' | 'createdAt'>) => {
+  const newHost: HostData = {
+    ...hostData,
+    id: `host-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    createdAt: Date.now()
   }
-)
+  const hosts = [...get(hostsAtom), newHost]
+  set(hostsAtom, hosts)
+  saveHostsToStorage(hosts)
+  return newHost
+})
 
 // 删除 Host 的 action atom
 export const removeHostAtom = atom(null, (get, set, hostId: string) => {

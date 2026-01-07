@@ -1,12 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { AuthType } from '@/store/hosts'
-import {
-  IconServer,
-  IconUser,
-  IconLock,
-  IconKey
-} from '@tabler/icons-react'
+import { IconServer, IconUser, IconLock, IconKey } from '@tabler/icons-react'
 
 export interface NewHostFormData {
   name: string
@@ -28,12 +23,7 @@ const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
   className
 }) => (
-  <div
-    className={cn(
-      'rounded-2xl bg-white p-5 shadow-sm dark:bg-neutral-900',
-      className
-    )}
-  >
+  <div className={cn('rounded-2xl bg-white p-5 shadow-sm dark:bg-neutral-900', className)}>
     {children}
   </div>
 )
@@ -58,10 +48,7 @@ const IconInput: React.FC<{
   </div>
 )
 
-export const NewHostForm: React.FC<NewHostFormProps> = ({
-  onSubmit,
-  isLoading = false
-}) => {
+export const NewHostForm: React.FC<NewHostFormProps> = ({ onSubmit, isLoading = false }) => {
   const [formData, setFormData] = useState<NewHostFormData>({
     name: '',
     address: '',
@@ -92,10 +79,7 @@ export const NewHostForm: React.FC<NewHostFormProps> = ({
     }
   }
 
-  const updateField = <K extends keyof NewHostFormData>(
-    field: K,
-    value: NewHostFormData[K]
-  ) => {
+  const updateField = <K extends keyof NewHostFormData>(field: K, value: NewHostFormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -215,7 +199,7 @@ export const NewHostForm: React.FC<NewHostFormProps> = ({
       </div>
 
       {/* Footer - Connect Button */}
-      <div className="bg-gradient-to-t from-[#f0f2f5] via-[#f0f2f5] to-transparent px-4 pb-6 pt-4 dark:from-neutral-800 dark:via-neutral-800">
+      <div className="bg-linear-to-t from-[#f0f2f5] via-[#f0f2f5] to-transparent px-4 pb-6 pt-4 dark:from-neutral-800 dark:via-neutral-800">
         <button
           type="submit"
           disabled={!isFormValid || isLoading}
