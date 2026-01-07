@@ -76,7 +76,7 @@ export default function HostsPage() {
           </button>
           <button
             onClick={() => setIsPanelOpen(true)}
-            className="flex items-center gap-2 cursor-pointer rounded-lg bg-linear-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-blue-500/25 transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-blue-500/40 active:scale-[0.98]"
+            className="flex items-center gap-2 cursor-pointer rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-sky-600/25 transition-all hover:bg-sky-800 hover:shadow-sky-600/40 active:scale-[0.98]"
           >
             <IconPlus size={18} />
             New Host
@@ -144,7 +144,7 @@ export default function HostsPage() {
               You are going to remove this host:
             </p>
             <div className="flex items-center gap-4 rounded-lg bg-neutral-100 p-4 dark:bg-neutral-800">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-blue-600 text-white">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-sky-600 text-white">
                 <IconServer size={28} />
               </div>
               <div>

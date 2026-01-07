@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: my-terminal-app
+productName: terminix
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: my-terminal-app
+  executableName: terminix
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

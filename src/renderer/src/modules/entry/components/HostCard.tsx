@@ -31,7 +31,7 @@ export function HostCard({ host, onConnect, onDelete, onEdit }: HostCardProps) {
       </div>
 
       {/* Icon */}
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-blue-600 text-white">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-600 text-white">
         <IconServer size={24} />
       </div>
 
