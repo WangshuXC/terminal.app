@@ -2,16 +2,16 @@
 
 ## Commands
 
-| Command               | Description                                      |
-| --------------------- | ------------------------------------------------ |
-| `npm install`         | Install dependencies                             |
-| `npm run dev`         | Start development server with hot reload        |
-| `npm run build`       | Type-check and build for production             |
-| `npm run build:mac`   | Build macOS app package                          |
-| `npm run build:win`   | Build Windows app package                        |
-| `npm run build:linux` | Build Linux app package                          |
-| `npm run lint`        | Run ESLint with cache                            |
-| `npm run format`      | Format code with Prettier                        |
+| Command               | Description                                        |
+| --------------------- | -------------------------------------------------- |
+| `npm install`         | Install dependencies                               |
+| `npm run dev`         | Start development server with hot reload           |
+| `npm run build`       | Type-check and build for production                |
+| `npm run build:mac`   | Build macOS app package                            |
+| `npm run build:win`   | Build Windows app package                          |
+| `npm run build:linux` | Build Linux app package                            |
+| `npm run lint`        | Run ESLint with cache                              |
+| `npm run format`      | Format code with Prettier                          |
 | `npm run typecheck`   | Run TypeScript type checking for both node and web |
 
 ## Architecture

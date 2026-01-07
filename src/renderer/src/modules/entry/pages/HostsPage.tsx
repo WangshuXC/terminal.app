@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAtom, useSetAtom } from 'jotai'
-import { addSshTabAtom } from '@/store/tabs'
+import { addSshTabAtom, addSftpTabAtom } from '@/store/tabs'
 import { hostsAtom, addHostAtom, removeHostAtom, updateHostAtom, HostData } from '@/store/hosts'
 import { SlidePanel } from '@/components/ui/SlidePanel'
 import {
@@ -20,6 +20,7 @@ export default function HostsPage() {
   const removeHost = useSetAtom(removeHostAtom)
   const updateHost = useSetAtom(updateHostAtom)
   const addSshTab = useSetAtom(addSshTabAtom)
+  const addSftpTab = useSetAtom(addSftpTabAtom)
 
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [editingHost, setEditingHost] = useState<HostData | null>(null)
@@ -46,6 +47,10 @@ export default function HostsPage() {
 
   const handleConnectHost = (host: HostData) => {
     addSshTab({ hostId: host.id, label: host.name })
+  }
+
+  const handleSftpConnectHost = (host: HostData) => {
+    addSftpTab({ hostId: host.id, label: host.name })
   }
 
   const handleDeleteHost = (e: React.MouseEvent, host: HostData) => {
@@ -88,6 +93,7 @@ export default function HostsPage() {
               key={host.id}
               host={host}
               onConnect={() => handleConnectHost(host)}
+              onSftpConnect={() => handleSftpConnectHost(host)}
               onDelete={(e) => handleDeleteHost(e, host)}
               onEdit={(e) => handleEditHost(e, host)}
             />

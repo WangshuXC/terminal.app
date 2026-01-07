@@ -8,32 +8,39 @@ import {
   SshLogPayload,
   SshErrorPayload,
   SshOutputPayload,
-  SshExitPayload
+  SshExitPayload,
+  SftpConnectOptions,
+  SftpListOptions,
+  SftpUploadOptions,
+  SftpDownloadOptions,
+  SftpFileOperation,
+  SftpChmodOptions,
+  SftpStatusPayload,
+  SftpErrorPayload,
+  SftpProgressPayload,
+  LocalListOptions,
+  LocalFileOperation,
+  LocalChmodOptions
 } from '../shared/types'
 
-// 渲染进程 SSH API
+// SSH API
 const sshApi = {
-  // 连接 SSH 服务器
   connect: (options: SshConnectOptions): Promise<boolean> => {
     return ipcRenderer.invoke(IPC_CHANNELS.SSH_CONNECT, options)
   },
 
-  // 向 SSH 写入数据
   write: (id: string, data: string): void => {
     ipcRenderer.send(IPC_CHANNELS.SSH_WRITE, { id, data })
   },
 
-  // 调整 SSH 终端大小
   resize: (options: SshResizeOptions): void => {
     ipcRenderer.send(IPC_CHANNELS.SSH_RESIZE, options)
   },
 
-  // 断开 SSH 连接
   disconnect: (id: string): void => {
     ipcRenderer.send(IPC_CHANNELS.SSH_DISCONNECT, id)
   },
 
-  // 监听 SSH 状态更新
   onStatus: (callback: (payload: SshStatusPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshStatusPayload) => {
       callback(payload)
@@ -44,7 +51,6 @@ const sshApi = {
     }
   },
 
-  // 监听 SSH 日志
   onLog: (callback: (payload: SshLogPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshLogPayload) => {
       callback(payload)
@@ -55,7 +61,6 @@ const sshApi = {
     }
   },
 
-  // 监听 SSH 错误
   onError: (callback: (payload: SshErrorPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshErrorPayload) => {
       callback(payload)
@@ -66,7 +71,6 @@ const sshApi = {
     }
   },
 
-  // 监听 SSH 输出
   onOutput: (callback: (payload: SshOutputPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshOutputPayload) => {
       callback(payload)
@@ -77,7 +81,6 @@ const sshApi = {
     }
   },
 
-  // 监听 SSH 退出
   onExit: (callback: (payload: SshExitPayload) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: SshExitPayload) => {
       callback(payload)
@@ -89,12 +92,109 @@ const sshApi = {
   }
 }
 
+// SFTP API
+const sftpApi = {
+  connect: (options: SftpConnectOptions): Promise<boolean> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SFTP_CONNECT, options)
+  },
+
+  disconnect: (id: string): void => {
+    ipcRenderer.send(IPC_CHANNELS.SFTP_DISCONNECT, id)
+  },
+
+  list: (options: SftpListOptions) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SFTP_LIST, options)
+  },
+
+  upload: (options: SftpUploadOptions) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SFTP_UPLOAD, options)
+  },
+
+  download: (options: SftpDownloadOptions) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SFTP_DOWNLOAD, options)
+  },
+
+  delete: (options: SftpFileOperation) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SFTP_DELETE, options)
+  },
+
+  mkdir: (options: SftpFileOperation) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SFTP_MKDIR, options)
+  },
+
+  rename: (options: SftpFileOperation) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SFTP_RENAME, options)
+  },
+
+  chmod: (options: SftpChmodOptions) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.SFTP_CHMOD, options)
+  },
+
+  onStatus: (callback: (payload: SftpStatusPayload) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: SftpStatusPayload) => {
+      callback(payload)
+    }
+    ipcRenderer.on(IPC_CHANNELS.SFTP_STATUS, handler)
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.SFTP_STATUS, handler)
+    }
+  },
+
+  onError: (callback: (payload: SftpErrorPayload) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: SftpErrorPayload) => {
+      callback(payload)
+    }
+    ipcRenderer.on(IPC_CHANNELS.SFTP_ERROR, handler)
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.SFTP_ERROR, handler)
+    }
+  },
+
+  onProgress: (callback: (payload: SftpProgressPayload) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, payload: SftpProgressPayload) => {
+      callback(payload)
+    }
+    ipcRenderer.on(IPC_CHANNELS.SFTP_PROGRESS, handler)
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.SFTP_PROGRESS, handler)
+    }
+  }
+}
+
+// Local file API
+const localApi = {
+  getHome: () => {
+    return ipcRenderer.invoke('local:home')
+  },
+
+  list: (options: LocalListOptions) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.LOCAL_LIST, options)
+  },
+
+  delete: (options: LocalFileOperation) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.LOCAL_DELETE, options)
+  },
+
+  mkdir: (options: LocalFileOperation) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.LOCAL_MKDIR, options)
+  },
+
+  rename: (options: LocalFileOperation) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.LOCAL_RENAME, options)
+  },
+
+  chmod: (options: LocalChmodOptions) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.LOCAL_CHMOD, options)
+  }
+}
+
 // 使用 contextBridge API 将 Electron API 暴露给渲染进程
-// 仅在启用上下文隔离时使用，否则直接添加到 DOM 全局对象
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('sshApi', sshApi)
+    contextBridge.exposeInMainWorld('sftpApi', sftpApi)
+    contextBridge.exposeInMainWorld('localApi', localApi)
   } catch (error) {
     console.error(error)
   }
@@ -103,4 +203,8 @@ if (process.contextIsolated) {
   window.electron = electronAPI
   // @ts-ignore (在 dts 中定义)
   window.sshApi = sshApi
+  // @ts-ignore (在 dts 中定义)
+  window.sftpApi = sftpApi
+  // @ts-ignore (在 dts 中定义)
+  window.localApi = localApi
 }

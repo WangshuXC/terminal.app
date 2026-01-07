@@ -3,11 +3,9 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { sshManager } from './sshManager'
-import {
-  IPC_CHANNELS,
-  SshConnectOptions,
-  SshResizeOptions
-} from '../shared/types'
+import { sftpManager } from './sftpManager'
+import { localFileManager } from './localFileManager'
+import { IPC_CHANNELS, SshConnectOptions, SshResizeOptions } from '../shared/types'
 
 function createWindow(): void {
   // 创建浏览器窗口
@@ -79,6 +77,71 @@ app.whenReady().then(() => {
     sshManager.disconnect(id)
   })
 
+  // SFTP IPC handlers
+  ipcMain.handle(IPC_CHANNELS.SFTP_CONNECT, async (event, options) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) return false
+    return sftpManager.connect(options, window)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SFTP_LIST, async (_, options) => {
+    return sftpManager.listFiles(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SFTP_UPLOAD, async (_, options) => {
+    return sftpManager.uploadFile(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SFTP_DOWNLOAD, async (_, options) => {
+    return sftpManager.downloadFile(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SFTP_DELETE, async (_, options) => {
+    return sftpManager.deleteFile(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SFTP_MKDIR, async (_, options) => {
+    return sftpManager.createDirectory(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SFTP_RENAME, async (_, options) => {
+    return sftpManager.renameFile(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SFTP_CHMOD, async (_, options) => {
+    return sftpManager.changePermissions(options)
+  })
+
+  ipcMain.on(IPC_CHANNELS.SFTP_DISCONNECT, (_, id) => {
+    sftpManager.disconnect(id)
+  })
+
+  // Local file system IPC handlers
+  ipcMain.handle(IPC_CHANNELS.LOCAL_LIST, async (_, options) => {
+    return localFileManager.listFiles(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOCAL_DELETE, async (_, options) => {
+    return localFileManager.deleteFile(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOCAL_MKDIR, async (_, options) => {
+    return localFileManager.createDirectory(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOCAL_RENAME, async (_, options) => {
+    return localFileManager.renameFile(options)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.LOCAL_CHMOD, async (_, options) => {
+    return localFileManager.changePermissions(options)
+  })
+
+  // Get home directory
+  ipcMain.handle('local:home', () => {
+    return localFileManager.getHomeDirectory()
+  })
+
   createWindow()
 
   app.on('activate', function () {
@@ -93,6 +156,7 @@ app.whenReady().then(() => {
 // 直到用户使用 Cmd + Q 显式退出
 app.on('window-all-closed', () => {
   sshManager.disconnectAll()
+  sftpManager.disconnectAll()
   if (process.platform !== 'darwin') {
     app.quit()
   }

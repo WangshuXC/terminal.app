@@ -1,6 +1,6 @@
 import { atom } from 'jotai'
 
-export type TabType = 'vaults' | 'ssh'
+export type TabType = 'vaults' | 'ssh' | 'sftp'
 
 export interface Tab {
   id: string
@@ -24,6 +24,7 @@ export const activeTabAtom = atom((get) => {
 
 // 用于生成唯一ID的计数器
 let sshCounter = 0
+let sftpCounter = 0
 
 // 添加新SSH标签的action atom (支持传入 host 信息)
 export const addSshTabAtom = atom(
@@ -42,6 +43,32 @@ export const addSshTabAtom = atom(
     const newTab: Tab = {
       id: `ssh-${sshCounter}`,
       type: 'ssh',
+      label: sameLabelCount === 0 ? baseLabel : `${baseLabel} - ${sameLabelCount}`,
+      hostId: hostInfo?.hostId
+    }
+    set(tabsAtom, [...get(tabsAtom), newTab])
+    set(activeTabIdAtom, newTab.id)
+    return newTab
+  }
+)
+
+// 添加新SFTP标签的action atom
+export const addSftpTabAtom = atom(
+  null,
+  (get, set, hostInfo?: { hostId: string; label: string }) => {
+    sftpCounter++
+    const tabs = get(tabsAtom)
+    const baseLabel = hostInfo?.label || 'SFTP'
+
+    // 统计相同 baseLabel 的 SFTP tab 数量
+    const sameLabelCount = tabs.filter(
+      (tab) =>
+        tab.type === 'sftp' && (tab.label === baseLabel || tab.label.startsWith(`${baseLabel} (`))
+    ).length
+
+    const newTab: Tab = {
+      id: `sftp-${sftpCounter}`,
+      type: 'sftp',
       label: sameLabelCount === 0 ? baseLabel : `${baseLabel} - ${sameLabelCount}`,
       hostId: hostInfo?.hostId
     }
