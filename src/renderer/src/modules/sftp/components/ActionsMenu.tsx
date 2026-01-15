@@ -5,15 +5,21 @@ import {
   IconFolderPlus,
   IconUpload,
   IconDownload,
-  IconSettings
+  IconSettings,
+  IconEye,
+  IconEyeOff
 } from '@tabler/icons-react'
 
-type MenuItem = { separator: true } | { icon: React.ReactNode; label: string; onClick: () => void }
+type MenuItem =
+  | { separator: true }
+  | { icon: React.ReactNode; label: string; onClick: () => void; checked?: boolean }
 
 interface ActionsMenuProps {
   isLocal: boolean
+  showPermissions: boolean
   onRefresh: () => void
   onCreateFolder: () => void
+  onTogglePermissions: () => void
   onUpload?: () => void
   onDownload?: () => void
   onChangePermissions?: () => void
@@ -21,8 +27,10 @@ interface ActionsMenuProps {
 
 export function ActionsMenu({
   isLocal,
+  showPermissions,
   onRefresh,
   onCreateFolder,
+  onTogglePermissions,
   onUpload,
   onDownload,
   onChangePermissions
@@ -51,16 +59,17 @@ export function ActionsMenu({
       icon: <IconRefresh size={16} />,
       label: '刷新',
       onClick: () => {
-        onRefresh()
         setIsOpen(false)
+        onRefresh()
       }
     },
     {
       icon: <IconFolderPlus size={16} />,
       label: '新建文件夹',
       onClick: () => {
-        onCreateFolder()
         setIsOpen(false)
+        // 使用 setTimeout 确保菜单关闭后再显示 prompt
+        setTimeout(() => onCreateFolder(), 0)
       }
     }
   ]
@@ -104,11 +113,23 @@ export function ActionsMenu({
     })
   }
 
+  // 添加显示设置分隔符和选项
+  menuItems.push({ separator: true })
+  menuItems.push({
+    icon: showPermissions ? <IconEye size={16} /> : <IconEyeOff size={16} />,
+    label: showPermissions ? '隐藏权限列' : '显示权限列',
+    onClick: () => {
+      onTogglePermissions()
+      setIsOpen(false)
+    },
+    checked: showPermissions
+  })
+
   return (
     <div ref={menuRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+        className="flex items-center gap-1 rounded-md cursor-pointer px-2 py-1 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
       >
         <span>Actions</span>
         <IconChevronDown

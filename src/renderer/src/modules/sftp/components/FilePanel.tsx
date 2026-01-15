@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, forwardRef, useImperativeHandle, useRef } from 'react'
 import type { FileItem } from '@shared/types'
 import { FileList } from './FileList'
 import { PathBreadcrumb } from './PathBreadcrumb'
@@ -9,7 +9,8 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogFooter
+  AlertDialogFooter,
+  AlertDialogTitle
 } from '@/components/ui/AlertDialog'
 import {
   IconHome,
@@ -17,10 +18,26 @@ import {
   IconDownload,
   IconX,
   IconFile,
-  IconFolder
+  IconFolder,
+  IconPlugConnectedX
 } from '@tabler/icons-react'
 
+// 输入对话框类型
+type InputDialogType = 'createFolder' | 'rename' | 'permissions' | null
+
+interface InputDialogState {
+  type: InputDialogType
+  title: string
+  placeholder: string
+  defaultValue: string
+  targetPath?: string
+}
+
 export type FilePanelMode = 'local' | 'remote'
+
+export interface FilePanelRef {
+  refresh: () => void
+}
 
 interface FilePanelProps {
   mode: FilePanelMode
@@ -29,26 +46,29 @@ interface FilePanelProps {
   currentPath: string
   onPathChange: (path: string) => void
   onTransfer?: (filePath: string) => void // 上传(本地)或下载(远程)
+  onDisconnect?: () => void // 断开连接回调（仅远程模式）
 }
 
-export function FilePanel({
-  mode,
-  title,
-  tabId,
-  currentPath,
-  onPathChange,
-  onTransfer
-}: FilePanelProps) {
+export const FilePanel = forwardRef<FilePanelRef, FilePanelProps>(function FilePanel(
+  { mode, title, tabId, currentPath, onPathChange, onTransfer, onDisconnect },
+  ref
+) {
   const [files, setFiles] = useState<FileItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
+  const [showPermissions, setShowPermissions] = useState(false)
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
     file: FileItem | null
   } | null>(null)
   const [deletingFile, setDeletingFile] = useState<FileItem | null>(null)
+
+  // 输入对话框状态
+  const [inputDialog, setInputDialog] = useState<InputDialogState | null>(null)
+  const [inputValue, setInputValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const isLocal = mode === 'local'
 
@@ -80,6 +100,11 @@ export function FilePanel({
   useEffect(() => {
     loadFiles()
   }, [loadFiles])
+
+  // 暴露 refresh 方法给父组件
+  useImperativeHandle(ref, () => ({
+    refresh: loadFiles
+  }))
 
   // 路径变化时清除选择
   useEffect(() => {
@@ -137,8 +162,18 @@ export function FilePanel({
   }
 
   // 创建文件夹
-  const handleCreateFolder = async () => {
-    const folderName = prompt('请输入文件夹名称:')
+  const handleCreateFolder = () => {
+    setInputDialog({
+      type: 'createFolder',
+      title: '新建文件夹',
+      placeholder: '请输入文件夹名称',
+      defaultValue: ''
+    })
+    setInputValue('')
+  }
+
+  // 执行创建文件夹
+  const doCreateFolder = async (folderName: string) => {
     if (!folderName) return
 
     try {
@@ -186,9 +221,21 @@ export function FilePanel({
   }
 
   // 重命名文件
-  const handleRename = async (filePath: string) => {
+  const handleRename = (filePath: string) => {
     const currentName = filePath.split('/').pop() || ''
-    const newName = prompt('请输入新名称:', currentName)
+    setInputDialog({
+      type: 'rename',
+      title: '重命名',
+      placeholder: '请输入新名称',
+      defaultValue: currentName,
+      targetPath: filePath
+    })
+    setInputValue(currentName)
+  }
+
+  // 执行重命名
+  const doRename = async (newName: string, filePath: string) => {
+    const currentName = filePath.split('/').pop() || ''
     if (!newName || newName === currentName) return
 
     try {
@@ -208,7 +255,7 @@ export function FilePanel({
   }
 
   // 修改权限（仅远程）
-  const handleChangePermissions = async (filePath?: string) => {
+  const handleChangePermissions = (filePath?: string) => {
     if (isLocal) return
 
     const targetPath = filePath || Array.from(selectedFiles)[0]
@@ -217,17 +264,67 @@ export function FilePanel({
     const currentFile = files.find((f) => f.path === targetPath)
     const currentPermissions = currentFile?.permissions.octal || '755'
 
-    const newPermissions = prompt('请输入新权限 (八进制):', currentPermissions)
+    setInputDialog({
+      type: 'permissions',
+      title: '修改权限',
+      placeholder: '请输入权限 (八进制)',
+      defaultValue: currentPermissions,
+      targetPath: targetPath
+    })
+    setInputValue(currentPermissions)
+  }
+
+  // 执行修改权限
+  const doChangePermissions = async (newPermissions: string, filePath: string) => {
+    const currentFile = files.find((f) => f.path === filePath)
+    const currentPermissions = currentFile?.permissions.octal || '755'
     if (!newPermissions || newPermissions === currentPermissions) return
 
     try {
       if (!tabId) return
-      await window.sftpApi.chmod({ id: tabId, path: targetPath, permissions: newPermissions })
+      await window.sftpApi.chmod({ id: tabId, path: filePath, permissions: newPermissions })
       loadFiles()
     } catch (err) {
       alert('修改权限失败: ' + (err instanceof Error ? err.message : '未知错误'))
     }
   }
+
+  // 处理输入对话框确认
+  const handleInputConfirm = async () => {
+    if (!inputDialog) return
+
+    const value = inputValue.trim()
+    if (!value) {
+      setInputDialog(null)
+      return
+    }
+
+    switch (inputDialog.type) {
+      case 'createFolder':
+        await doCreateFolder(value)
+        break
+      case 'rename':
+        if (inputDialog.targetPath) {
+          await doRename(value, inputDialog.targetPath)
+        }
+        break
+      case 'permissions':
+        if (inputDialog.targetPath) {
+          await doChangePermissions(value, inputDialog.targetPath)
+        }
+        break
+    }
+
+    setInputDialog(null)
+  }
+
+  // 输入对话框打开时聚焦
+  useEffect(() => {
+    if (inputDialog && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [inputDialog])
 
   // 传输选中的文件
   const handleTransferSelected = () => {
@@ -247,6 +344,16 @@ export function FilePanel({
       <div className="flex items-center justify-between border-b border-neutral-200 px-3 py-2 dark:border-neutral-700">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
+          {/* 断开连接按钮（仅远程模式） */}
+          {!isLocal && onDisconnect && (
+            <button
+              onClick={onDisconnect}
+              className="flex items-center gap-1 cursor-pointer rounded-md px-2 py-1 text-xs font-medium text-neutral-500 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+              title="断开连接"
+            >
+              <IconPlugConnectedX size={14} />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-1">
@@ -264,7 +371,7 @@ export function FilePanel({
           {/* 主目录 */}
           <button
             onClick={handleGoHome}
-            className="rounded p-1.5 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
+            className="rounded cursor-pointer p-1.5 text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-100"
             title="主目录"
           >
             <IconHome size={16} />
@@ -273,8 +380,10 @@ export function FilePanel({
           {/* Actions 下拉菜单 */}
           <ActionsMenu
             isLocal={isLocal}
+            showPermissions={showPermissions}
             onRefresh={loadFiles}
             onCreateFolder={handleCreateFolder}
+            onTogglePermissions={() => setShowPermissions(!showPermissions)}
             onUpload={selectedFiles.size > 0 && onTransfer ? handleTransferSelected : undefined}
             onDownload={selectedFiles.size > 0 && onTransfer ? handleTransferSelected : undefined}
             onChangePermissions={
@@ -294,6 +403,7 @@ export function FilePanel({
           loading={loading}
           error={error}
           selectedFiles={selectedFiles}
+          showPermissions={showPermissions}
           onFileDoubleClick={handleFileDoubleClick}
           onFileSelect={handleFileSelect}
           onContextMenu={handleContextMenu}
@@ -325,6 +435,7 @@ export function FilePanel({
       {/* 删除确认对话框 */}
       <AlertDialog open={!!deletingFile} onOpenChange={() => setDeletingFile(null)}>
         <AlertDialogContent className="select-none gap-0 overflow-hidden rounded-2xl border-0 p-0 sm:max-w-md">
+          <AlertDialogTitle className="sr-only">删除确认</AlertDialogTitle>
           {/* Header */}
           <div className="flex items-center justify-between rounded-t-2xl bg-slate-700 px-6 py-4">
             <h2 className="text-lg font-semibold text-white">删除确认</h2>
@@ -375,6 +486,50 @@ export function FilePanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 输入对话框 */}
+      <AlertDialog open={!!inputDialog} onOpenChange={() => setInputDialog(null)}>
+        <AlertDialogContent className="select-none gap-0 overflow-hidden rounded-2xl border-0 p-0 sm:max-w-md">
+          <AlertDialogTitle className="sr-only">{inputDialog?.title}</AlertDialogTitle>
+          {/* Header */}
+          <div className="flex items-center justify-between rounded-t-2xl bg-slate-700 px-6 py-4">
+            <h2 className="text-lg font-semibold text-white">{inputDialog?.title}</h2>
+            <AlertDialogCancel className="h-fit cursor-pointer rounded-lg border-0 bg-transparent p-1.5 text-white shadow-none hover:bg-slate-600 hover:text-white">
+              <IconX className="size-5" />
+            </AlertDialogCancel>
+          </div>
+
+          {/* Content */}
+          <div className="bg-white px-6 py-5 dark:bg-neutral-900">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleInputConfirm()
+                }
+              }}
+              placeholder={inputDialog?.placeholder}
+              className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-500"
+            />
+          </div>
+
+          {/* Footer */}
+          <AlertDialogFooter className="rounded-b-2xl bg-white px-6 pb-6 dark:bg-neutral-900">
+            <AlertDialogCancel className="cursor-pointer rounded-lg border border-neutral-300 bg-white px-6 py-2.5 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">
+              取消
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleInputConfirm}
+              className="cursor-pointer rounded-lg bg-blue-600 px-6 py-2.5 text-white hover:bg-blue-700"
+            >
+              确定
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
-}
+})

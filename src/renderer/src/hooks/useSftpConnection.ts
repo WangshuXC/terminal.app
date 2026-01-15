@@ -17,6 +17,7 @@ const initialState: SftpConnectionState = {
 export function useSftpConnection(tabId: string, host: HostData | undefined) {
   const [state, setState] = useState<SftpConnectionState>(initialState)
   const isConnectingRef = useRef(false)
+  const currentHostIdRef = useRef<string | undefined>(undefined)
 
   const connect = useCallback(async () => {
     if (!host || isConnectingRef.current) return
@@ -89,8 +90,19 @@ export function useSftpConnection(tabId: string, host: HostData | undefined) {
     }
   }, [tabId])
 
-  // 挂载时自动连接
+  // 挂载时自动连接，或 host 变化时重新连接
   useEffect(() => {
+    // 如果 host 变化了，先断开旧连接
+    if (host?.id !== currentHostIdRef.current) {
+      if (currentHostIdRef.current && state.isConnected) {
+        window.sftpApi.disconnect(tabId)
+      }
+      currentHostIdRef.current = host?.id
+      // 使用 setTimeout 避免在 effect 中直接调用 setState
+      setTimeout(() => setState(initialState), 0)
+      return
+    }
+
     if (host && state.status === 'idle') {
       const timer = setTimeout(() => {
         connect()
@@ -98,7 +110,7 @@ export function useSftpConnection(tabId: string, host: HostData | undefined) {
       return () => clearTimeout(timer)
     }
     return undefined
-  }, [host, state.status, connect])
+  }, [host, state.status, state.isConnected, connect, tabId])
 
   // 卸载时清理
   useEffect(() => {

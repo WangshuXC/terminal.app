@@ -1,6 +1,6 @@
 import { useAtom, useSetAtom } from 'jotai'
 import { tabsAtom, activeTabIdAtom, closeTabAtom } from '@/store/tabs'
-import { IconX, IconEye, IconServer } from '@tabler/icons-react'
+import { IconX, IconEye, IconServer, IconFolder } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 
 const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
@@ -22,43 +22,52 @@ export default function TabBar() {
         className="flex h-full items-center gap-2 py-2"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
-        {tabs.map((tab) => (
-          <div
-            key={tab.id}
-            className={cn(
-              'group flex h-full items-center gap-2 px-4 cursor-pointer rounded-lg transition-all',
-              activeTabId === tab.id
-                ? 'bg-[#2d3f54] text-white'
-                : 'bg-transparent text-neutral-400 hover:bg-[#2d3f54]/50 hover:text-white'
-            )}
-            onClick={() => setActiveTabId(tab.id)}
-          >
-            {tab.type === 'vaults' ? (
-              <IconEye className="h-4 w-4 shrink-0" />
-            ) : (
-              <IconServer className="h-4 w-4 shrink-0" />
-            )}
-            <span
+        {tabs.map((tab, index) => (
+          <div key={tab.id} className="flex h-full items-center">
+            <div
               className={cn(
-                'text-sm whitespace-nowrap overflow-hidden text-ellipsis transition-all',
-                activeTabId === tab.id && tab.type !== 'vaults' ? 'max-w-40 mr-10' : 'max-w-24'
+                'group flex h-full items-center gap-2 px-4 cursor-pointer rounded-lg transition-all',
+                activeTabId === tab.id
+                  ? 'bg-[#2d3f54] text-white'
+                  : 'bg-transparent text-neutral-400 hover:bg-[#2d3f54]/50 hover:text-white'
               )}
+              onClick={() => setActiveTabId(tab.id)}
             >
-              {tab.label}
-            </span>
-            {tab.type !== 'vaults' && (
-              <button
+              {tab.type === 'vaults' ? (
+                <IconEye className="h-4 w-4 shrink-0" />
+              ) : tab.type === 'sftp' ? (
+                <IconFolder className="h-4 w-4 shrink-0" />
+              ) : (
+                <IconServer className="h-4 w-4 shrink-0" />
+              )}
+              <span
                 className={cn(
-                  'ml-1 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 transition-opacity',
-                  activeTabId === tab.id && 'opacity-100'
+                  'text-sm whitespace-nowrap overflow-hidden text-ellipsis transition-all',
+                  activeTabId === tab.id && tab.type !== 'vaults' && tab.type !== 'sftp'
+                    ? 'max-w-40 mr-10'
+                    : 'max-w-24'
                 )}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  closeTab(tab.id)
-                }}
               >
-                <IconX className="h-3 w-3" />
-              </button>
+                {tab.label}
+              </span>
+              {tab.type !== 'vaults' && tab.type !== 'sftp' && (
+                <button
+                  className={cn(
+                    'ml-1 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 transition-opacity',
+                    activeTabId === tab.id && 'opacity-100'
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    closeTab(tab.id)
+                  }}
+                >
+                  <IconX className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+            {/* sftp 右侧分隔线 */}
+            {tab.type === 'sftp' && index < tabs.length - 1 && (
+              <div className="ml-2 h-5 w-px bg-neutral-600" />
             )}
           </div>
         ))}

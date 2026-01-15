@@ -6,6 +6,7 @@ interface FileListProps {
   loading: boolean
   error: string | null
   selectedFiles: Set<string>
+  showPermissions: boolean
   onFileDoubleClick: (file: FileItem) => void
   onFileSelect: (file: FileItem, selected: boolean) => void
   onContextMenu: (event: React.MouseEvent, file: FileItem | null) => void
@@ -16,6 +17,7 @@ export function FileList({
   loading,
   error,
   selectedFiles,
+  showPermissions,
   onFileDoubleClick,
   onFileSelect,
   onContextMenu
@@ -31,12 +33,29 @@ export function FileList({
     }
   }
 
+  const getFileKind = (file: FileItem) => {
+    switch (file.type) {
+      case 'directory':
+        return 'folder'
+      case 'symlink':
+        return 'symlink'
+      default: {
+        const name = file.name
+        const lastDotIndex = name.lastIndexOf('.')
+        if (lastDotIndex <= 0) return 'file'
+        const ext = name.slice(lastDotIndex + 1).toLowerCase()
+        if (!ext) return 'file'
+        return ext
+      }
+    }
+  }
+
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B'
+    if (bytes === 0) return '0 Bytes'
     const k = 1024
-    const sizes = ['B', 'KB', 'MB', 'GB']
+    const sizes = ['Bytes', 'kB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
   const formatDate = (date: Date) => {
@@ -68,7 +87,7 @@ export function FileList({
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full select-none items-center justify-center">
         <div className="flex items-center gap-2 text-neutral-500">
           <IconLoader2 size={20} className="animate-spin" />
           <span>Loading files...</span>
@@ -79,7 +98,7 @@ export function FileList({
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full select-none items-center justify-center">
         <div className="flex items-center gap-2 text-red-500">
           <IconAlertCircle size={20} />
           <span>{error}</span>
@@ -90,37 +109,39 @@ export function FileList({
 
   if (files.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full select-none items-center justify-center">
         <span className="text-neutral-500">No files found</span>
       </div>
     )
   }
 
   return (
-    <div className="h-full overflow-auto">
+    <div className="h-full select-none overflow-auto">
       <table className="w-full text-sm">
-        <thead className="sticky top-0 bg-neutral-50 dark:bg-neutral-800">
+        <thead className="sticky top-0 z-10 bg-neutral-50 dark:bg-neutral-800">
           <tr className="border-b border-neutral-200 dark:border-neutral-700">
             <th className="px-3 py-2 text-left font-medium text-neutral-700 dark:text-neutral-300">
               Name
             </th>
             <th className="px-3 py-2 text-left font-medium text-neutral-700 dark:text-neutral-300">
+              Date Modified
+            </th>
+            <th className="px-3 py-2 text-left font-medium text-neutral-700 dark:text-neutral-300">
               Size
             </th>
             <th className="px-3 py-2 text-left font-medium text-neutral-700 dark:text-neutral-300">
-              Permissions
+              Kind
             </th>
-            <th className="px-3 py-2 text-left font-medium text-neutral-700 dark:text-neutral-300">
-              Modified
-            </th>
+            {showPermissions && (
+              <th className="px-3 py-2 text-left font-medium text-neutral-700 dark:text-neutral-300">
+                Permissions
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
           {files.map((file) => {
             const isSelected = selectedFiles.has(file.path)
-            // hover: 浅蓝色背景 (原来select的颜色)
-            // selected: 深蓝色背景
-            // selected + hover: 更深的蓝色
             const rowClass = isSelected
               ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700'
               : 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
@@ -139,8 +160,15 @@ export function FileList({
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     {getFileIcon(file)}
-                    <span className={file.isHidden ? 'opacity-60' : ''}>{file.name}</span>
+                    <span className={file.isHidden ? 'text-neutral-400 dark:text-neutral-500' : ''}>
+                      {file.name}
+                    </span>
                   </div>
+                </td>
+                <td
+                  className={`px-3 py-2 ${isSelected ? 'text-blue-100' : 'text-neutral-600 dark:text-neutral-400'}`}
+                >
+                  {formatDate(file.modifiedTime)}
                 </td>
                 <td
                   className={`px-3 py-2 ${isSelected ? 'text-blue-100' : 'text-neutral-600 dark:text-neutral-400'}`}
@@ -148,15 +176,17 @@ export function FileList({
                   {file.type === 'directory' ? '-' : formatFileSize(file.size)}
                 </td>
                 <td
-                  className={`px-3 py-2 font-mono text-xs ${isSelected ? 'text-blue-100' : 'text-neutral-600 dark:text-neutral-400'}`}
-                >
-                  {formatPermissions(file)}
-                </td>
-                <td
                   className={`px-3 py-2 ${isSelected ? 'text-blue-100' : 'text-neutral-600 dark:text-neutral-400'}`}
                 >
-                  {formatDate(file.modifiedTime)}
+                  {getFileKind(file)}
                 </td>
+                {showPermissions && (
+                  <td
+                    className={`px-3 py-2 font-mono text-xs ${isSelected ? 'text-blue-100' : 'text-neutral-600 dark:text-neutral-400'}`}
+                  >
+                    {formatPermissions(file)}
+                  </td>
+                )}
               </tr>
             )
           })}

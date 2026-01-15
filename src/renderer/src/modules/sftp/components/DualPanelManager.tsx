@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { FilePanel } from './FilePanel'
+import React, { useState, useEffect, useRef } from 'react'
+import { FilePanel, FilePanelRef } from './FilePanel'
 
 interface DualPanelManagerProps {
   tabId: string
@@ -9,6 +9,9 @@ interface DualPanelManagerProps {
 export const DualPanelManager: React.FC<DualPanelManagerProps> = ({ tabId, hostLabel }) => {
   const [localPath, setLocalPath] = useState('')
   const [remotePath, setRemotePath] = useState('/')
+
+  const localPanelRef = useRef<FilePanelRef>(null)
+  const remotePanelRef = useRef<FilePanelRef>(null)
 
   // 获取用户主目录作为初始本地路径
   useEffect(() => {
@@ -38,6 +41,9 @@ export const DualPanelManager: React.FC<DualPanelManagerProps> = ({ tabId, hostL
         localPath: localFilePath,
         remotePath: targetPath
       })
+
+      // 上传成功后刷新远程面板
+      remotePanelRef.current?.refresh()
     } catch (error) {
       console.error('Upload failed:', error)
       alert('上传失败: ' + (error instanceof Error ? error.message : '未知错误'))
@@ -57,6 +63,9 @@ export const DualPanelManager: React.FC<DualPanelManagerProps> = ({ tabId, hostL
         remotePath: remoteFilePath,
         localPath: targetPath
       })
+
+      // 下载成功后刷新本地面板
+      localPanelRef.current?.refresh()
     } catch (error) {
       console.error('Download failed:', error)
       alert('下载失败: ' + (error instanceof Error ? error.message : '未知错误'))
@@ -68,6 +77,7 @@ export const DualPanelManager: React.FC<DualPanelManagerProps> = ({ tabId, hostL
       {/* 左侧本地文件面板 */}
       <div className="flex-1 border-r border-neutral-200 dark:border-neutral-700">
         <FilePanel
+          ref={localPanelRef}
           mode="local"
           title="本地文件"
           currentPath={localPath}
@@ -79,6 +89,7 @@ export const DualPanelManager: React.FC<DualPanelManagerProps> = ({ tabId, hostL
       {/* 右侧远程文件面板 */}
       <div className="flex-1">
         <FilePanel
+          ref={remotePanelRef}
           mode="remote"
           title={hostLabel}
           tabId={tabId}
